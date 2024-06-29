@@ -48,6 +48,8 @@ __all__ = (
     'CommandOnCooldown',
     'MissingApplicationID',
     'CommandSyncFailure',
+    'MissingSKU',
+    'MissingAnySKU',
 )
 
 if TYPE_CHECKING:
@@ -313,6 +315,50 @@ class CommandOnCooldown(CheckFailure):
         self.cooldown: Cooldown = cooldown
         self.retry_after: float = retry_after
         super().__init__(f'You are on cooldown. Try again in {retry_after:.2f}s')
+
+
+class MissingSKU(CheckFailure):
+    """An exception raised when the command user or guild lack of a
+    specified SKU to run.
+
+    This inherits from :exc:`~discord.app_commands.CheckFailure`
+
+    .. versionadded:: 2.5
+
+    Attributes
+    ----------
+    sku_id: :class:`int`
+        The SKU ID that is missing.
+    """
+
+    def __init__(self, sku_id: int) -> None:
+        self.sku_id: int = sku_id
+
+        message = f'You need {sku_id} SKU to run this command.'
+        super().__init__(message)
+
+
+class MissingAnySKU(CheckFailure):
+    """An exception raised when the command user or guild lack of any
+    of the specified SKU to run.
+
+    This inherits from :exc:`~discord.app_commands.CheckFailure`
+
+    .. versionadded:: 2.5
+
+    Attributes
+    ----------
+    missing_skus: List[:class:`int`]
+        The SKUs that the current context is missing.
+        These are the parameters passed to :func:`~discord.app_commands.check.has_any_sku`.
+    """
+
+    def __init__(self, missing_skus: List[int]) -> None:
+        self.missing_skus: List[int] = missing_skus
+
+        fmt = _human_join([f"'{sku}'" for sku in missing_skus])
+        message = f'You are missing at least one of the required SKUs: {fmt}'
+        super().__init__(message)
 
 
 class CommandAlreadyRegistered(AppCommandError):

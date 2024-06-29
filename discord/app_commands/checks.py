@@ -46,6 +46,8 @@ from .errors import (
     MissingPermissions,
     BotMissingPermissions,
     CommandOnCooldown,
+    MissingSKU,
+    MissingAnySKU,
 )
 
 from ..user import User
@@ -70,6 +72,8 @@ __all__ = (
     'bot_has_permissions',
     'cooldown',
     'dynamic_cooldown',
+    'has_sku',
+    'has_any_sku',
 )
 
 
@@ -535,3 +539,69 @@ def dynamic_cooldown(
         key_func = key
 
     return _create_cooldown_decorator(key_func, factory)
+
+
+def has_sku(item: int, /) -> Callable[[T], T]:
+    """A :func:`~discord.app_commands.check` that is added that checks if
+    the current context invoking the command has the SKU specified via ID.
+
+    You must give the exact snowflake ID of the SKU.
+
+    This check raises a special exception, :exc:`~discord.app_commands.MissingSKU`
+    that is inherited from :exc:`~discord.app_commands.CheckFailure`.    
+
+    .. versionadded:: 2.5
+
+    Parameters
+    ----------
+    item: :class:`int`
+        The ID of the SKU to check.
+    """
+
+    def predicate(interaction: Interaction) -> bool:
+        if item not in interaction.entitlement_sku_ids:
+            raise MissingSKU(item)
+
+        return True
+
+    return check(predicate)
+
+
+def has_any_sku(*items: int) -> Callable[[T], T]:
+    """A :func:`~discord.app_commands.check` that is added that checks
+    if the current context invoking the command has **any** of the specified
+    SKUs. This means that if they have one out of the three specified SKUs,
+    then this check will return ``True``.
+
+    Similar to :func:`has_sku`\, the IDs passed must be exact.
+
+    This check raises a special exception, :exc:`~discord.app_commands.MissingAnySKU`
+    that is inherited from :exc:`~discord.app_commands.CheckFailure`.
+
+    .. versionadded:: 2.5
+
+    Parameters
+    ----------
+    items: List[:class:`int`]
+        An argument list of SKU IDs to check that the current context has.
+
+    Excample
+    --------
+
+    .. code-block:: python3
+
+        @tree.command()
+        @app_commands.checks.has_any_sku(713576853864054805, 551844135871709184)
+        async def premium(interaction: discord.Interaction):
+            await interaction.response.send_message('You are a premium user :tada:!')
+    """
+
+    def predicate(interaction: Interaction) -> bool:
+        if any(
+            sku in interaction.entitlement_sku_ids
+            for sku in items
+        ):
+            return True
+        raise MissingAnySKU(list(items))
+
+    return check(predicate)
