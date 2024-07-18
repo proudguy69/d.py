@@ -2271,6 +2271,13 @@ class Client:
             attributes without needing any privileged intents. Defaults to ``True``.
 
             .. versionadded:: 2.0
+        preview: :class:`bool`
+            Whether to fetch the guild preview. If the current user is not in the guild,
+            then it must be discoverable.
+
+            Returns a partial guild object.
+
+            .. versionadded:: 2.5
 
         Raises
         ------
