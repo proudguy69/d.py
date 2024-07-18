@@ -2242,7 +2242,7 @@ class Client:
         data = await self.http.get_template(code)
         return Template(data=data, state=self._connection)
 
-    async def fetch_guild(self, guild_id: int, /, *, with_counts: bool = True) -> Guild:
+    async def fetch_guild(self, guild_id: int, /, *, with_counts: bool = True, preview: bool = False) -> Guild:
         """|coro|
 
         Retrieves a :class:`.Guild` from an ID.
@@ -2284,8 +2284,11 @@ class Client:
         :class:`.Guild`
             The guild from the ID.
         """
-        data = await self.http.get_guild(guild_id, with_counts=with_counts)
-        return Guild(data=data, state=self._connection)
+        if preview is True:
+            data = await self.http.get_guild_preview(guild_id)
+        else:
+            data = await self.http.get_guild(guild_id, with_counts=with_counts)
+        return Guild(data=data, state=self._connection)  #type: ignore
 
     async def create_guild(
         self,
