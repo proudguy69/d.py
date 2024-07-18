@@ -2273,9 +2273,9 @@ class Client:
             .. versionadded:: 2.0
         preview: :class:`bool`
             Whether to fetch the guild preview. If the current user is not in the guild,
-            then it must be discoverable.
-
-            Returns a partial guild object.
+            then it must be discoverable. This also fills :attr:`.Guild.approximate_member_count`
+            and :attr:`.Guild.approximate_presence_count` attributes without needing any priviliged
+            intents. Defaults to ``False``.
 
             .. versionadded:: 2.5
 
