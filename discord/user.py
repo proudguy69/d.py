@@ -43,7 +43,13 @@ if TYPE_CHECKING:
     from .message import Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.user import PartialUser as PartialUserPayload, User as UserPayload, AvatarDecorationData, Collectible as CollectiblePayload
+    from .types.user import (
+        PartialUser as PartialUserPayload,
+        User as UserPayload,
+        AvatarDecorationData,
+        Collectible as CollectiblePayload,
+        UserCollectibles as UserCollectiblesPayload,
+    )
 
 
 __all__ = (
@@ -126,7 +132,7 @@ class BaseUser(_UserTag):
         self.bot = data.get('bot', False)
         self.system = data.get('system', False)
         self._avatar_decoration_data = data.get('avatar_decoration_data')
-        self.collectibles = UserCollectible._from_data(self._state, data.get('collectibles', []))
+        self.collectibles = UserCollectible._from_data(self._state, data.get('collectibles'))
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -604,10 +610,10 @@ class UserCollectible:
         del self._extras['sku_id'], self._extras['label'], self._extras['expires_at'], self._extras['asset']
 
     @classmethod
-    def _from_data(cls, state: ConnectionState, collectibles: Optional[List[CollectiblePayload]]) -> List[UserCollectible]:
+    def _from_data(cls, state: ConnectionState, collectibles: Optional[UserCollectiblesPayload]) -> List[UserCollectible]:
         if not collectibles:
             return []
-        return [UserCollectible(state, data) for data in collectibles]
+        return [UserCollectible(state, data) for _, data in collectibles.items()]  # pyright: ignore[reportArgumentType]
 
     @property
     def asset(self) -> Asset:
