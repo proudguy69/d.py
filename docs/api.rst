@@ -5435,8 +5435,6 @@ PollAnswer
 .. autoclass:: PollAnswer()
     :members:
 
-.. _discord_api_data:
-
 MessageSnapshot
 ~~~~~~~~~~~~~~~~~
 
@@ -5452,6 +5450,16 @@ ClientStatus
 
 .. autoclass:: ClientStatus()
     :members:
+
+UserCollectible
+~~~~~~~~~~~~~~~
+
+.. attributetable:: UserCollectible
+
+.. autoclass:: UserCollectible()
+    :members:
+
+.. _discord_api_data:
 
 Data Classes
 --------------

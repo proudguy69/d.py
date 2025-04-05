@@ -31,7 +31,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import snowflake_time, _bytes_to_base64_data, MISSING, _get_as_snowflake
+from .utils import snowflake_time, _bytes_to_base64_data, MISSING, _get_as_snowflake, parse_time, utcnow
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -43,12 +43,13 @@ if TYPE_CHECKING:
     from .message import Message
     from .state import ConnectionState
     from .types.channel import DMChannel as DMChannelPayload
-    from .types.user import PartialUser as PartialUserPayload, User as UserPayload, AvatarDecorationData
+    from .types.user import PartialUser as PartialUserPayload, User as UserPayload, AvatarDecorationData, Collectible as CollectiblePayload
 
 
 __all__ = (
     'User',
     'ClientUser',
+    'UserCollectible',
 )
 
 
@@ -71,6 +72,7 @@ class BaseUser(_UserTag):
         '_public_flags',
         '_state',
         '_avatar_decoration_data',
+        'collectibles',
     )
 
     if TYPE_CHECKING:
@@ -80,6 +82,7 @@ class BaseUser(_UserTag):
         global_name: Optional[str]
         bot: bool
         system: bool
+        collectibles: List[UserCollectible]
         _state: ConnectionState
         _avatar: Optional[str]
         _banner: Optional[str]
@@ -123,6 +126,7 @@ class BaseUser(_UserTag):
         self.bot = data.get('bot', False)
         self.system = data.get('system', False)
         self._avatar_decoration_data = data.get('avatar_decoration_data')
+        self.collectibles = UserCollectible._from_data(self._state, data.get('collectibles', []))
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -516,6 +520,10 @@ class User(BaseUser, discord.abc.Messageable):
         Specifies if the user is a bot account.
     system: :class:`bool`
         Specifies if the user is a system user (i.e. represents Discord officially).
+    collectibles: List[:class:`UserCollectible`]
+        The user's collectibles.
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = ('__weakref__',)
@@ -568,3 +576,55 @@ class User(BaseUser, discord.abc.Messageable):
         state = self._state
         data: DMChannelPayload = await state.http.start_private_message(self.id)
         return state.add_dm_channel(data)
+
+
+class UserCollectible:
+    """Represents a user collectible that can be shown within a user profile.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    sku_id: :class:`int`
+        The SKU ID of this collectible.
+    label: :class:`str`
+        This collectible's label.
+    expires_at: Optional[:class:`datetime.datetime`]
+        Timestamp on which the user will no longer have access to the collectible.
+        If this is ``None`` then it has no limit.
+    """
+
+    def __init__(self, state: ConnectionState, data: CollectiblePayload) -> None:
+        self._state: ConnectionState = state
+        self.sku_id: int = int(data['sku_id'])
+        self.label: str = data['label']
+        self.expires_at: Optional[datetime] = parse_time(data['expires_at'])
+        self._asset: str = data['asset']
+        self._extras: Dict[str, Any] = dict(data)
+        del self._extras['sku_id'], self._extras['label'], self._extras['expires_at'], self._extras['asset']
+
+    @classmethod
+    def _from_data(cls, state: ConnectionState, collectibles: Optional[List[CollectiblePayload]]) -> List[UserCollectible]:
+        if not collectibles:
+            return []
+        return [UserCollectible(state, data) for data in collectibles]
+
+    @property
+    def asset(self) -> Asset:
+        """:class:`Asset`: Returns this collectible's asset."""
+        return Asset._from_user_collectible(self._state, self._asset)
+
+    @property
+    def extras(self) -> Dict[str, Any]:
+        """:class:`dict`: Returns a dictionary containing all the collectible metadata.
+        This is, essentially, all the data that is bound to a certain type of collectible.
+        """
+        return self._extras
+
+    def is_expired(self) -> bool:
+        """:class:`bool`: Whether this collectible has expired. This will always
+        return ``False`` if :attr:`.expires_at` is ``None``.
+        """
+        if self.expires_at is None:
+            return False
+        return utcnow() > self.expires_at
