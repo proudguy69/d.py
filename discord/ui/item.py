@@ -89,9 +89,11 @@ class Item(Generic[V]):
         raise NotImplementedError
 
     def is_dispatchable(self) -> bool:
+        print("item disbatchable called")
         return False
 
     def is_persistent(self) -> bool:
+        print(f"item disbatchable called {self._provided_custom_id}")
         return self._provided_custom_id
 
     def __repr__(self) -> str:
