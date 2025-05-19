@@ -175,6 +175,7 @@ class Container(Item[V]):
         for name, raw in self.__container_children_items__.items():
             if isinstance(raw, Item):
                 item = copy.deepcopy(raw)
+                print(f"container item: {item}")
                 item._parent = self
                 if getattr(item, '__discord_ui_action_row__', False):
                     if item.is_dispatchable():
@@ -209,9 +210,11 @@ class Container(Item[V]):
         return children
 
     def is_dispatchable(self) -> bool:
+        print("container dispatchable called")
         return bool(self.__dispatchable)
 
     def is_persistent(self) -> bool:
+        print(f"container persistent called")
         return self.is_dispatchable() and all(c.is_persistent() for c in self.children)
 
     def __init_subclass__(cls) -> None:

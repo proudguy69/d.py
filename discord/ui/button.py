@@ -121,6 +121,7 @@ class Button(Item[V]):
 
         requires_custom_id = url is None and sku_id is None
         self._provided_custom_id = custom_id is not None
+        print(f"button init CID: {self._provided_custom_id}, {self.custom_id}")
         if requires_custom_id and custom_id is None:
             custom_id = os.urandom(16).hex()
 
@@ -262,9 +263,11 @@ class Button(Item[V]):
         return self._underlying.to_dict()
 
     def is_dispatchable(self) -> bool:
+        print("button dispatchable called")
         return self.custom_id is not None
 
     def is_persistent(self) -> bool:
+        print("button persistent called")
         if self.style is ButtonStyle.link:
             return self.url is not None
         return super().is_persistent()

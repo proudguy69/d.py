@@ -115,9 +115,11 @@ class Section(Item[V]):
     # be accessory component callback, only called if accessory is
     # dispatchable?
     def is_dispatchable(self) -> bool:
+        print("section dispatchable called")
         return self.accessory.is_dispatchable()
 
     def is_persistent(self) -> bool:
+        print("section persistent called")
         return self.is_dispatchable() and self.accessory.is_persistent()
 
     def walk_children(self) -> Generator[Item[V], None, None]:

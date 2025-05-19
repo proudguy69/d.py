@@ -109,10 +109,14 @@ class Item(Generic[V]):
         raise NotImplementedError
 
     def is_dispatchable(self) -> bool:
+        print("base item dispatchable called")
         return False
 
     def is_persistent(self) -> bool:
+        state = self.is_persistent()
+        print(f"base item persistent called ")
         if self.is_dispatchable():
+            print(f"> provided_cid: {self._provided_custom_id}")
             return self._provided_custom_id
         return True
 
